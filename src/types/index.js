@@ -11,7 +11,7 @@ export const fuelSavings = shape({
   displayResult: bool,
   dateModified: string,
   necessaryDataIsProvidedToCalculateSavings: bool,
-  savings: savings
+  savings: savings,
 });
 
 export const savings = shape({

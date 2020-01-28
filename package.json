@@ -1,14 +1,13 @@
 {
-  "name": "react-slingshot",
-  "version": "7.0.1",
-  "description": "Starter kit for creating apps with React and Redux",
+  "name": "dfs-tools",
+  "version": "0.1.0",
+  "description": "Tools for improving cash and tournament lineups more rapidly",
   "engines": {
     "node": ">=8",
     "npm": ">=3"
   },
   "scripts": {
     "preinstall": "node tools/nodeVersionCheck.js",
-    "setup": "node tools/setup/setupMessage.js && npm install && node tools/setup/setup.js",
     "remove-demo": "babel-node tools/removeDemo.js",
     "start-message": "babel-node tools/startMessage.js",
     "prestart": "npm run start-message",
@@ -29,7 +28,7 @@
     "open:cover": "npm run test:cover && open-cli ./coverage/lcov-report/index.html",
     "analyze-bundle": "babel-node ./tools/analyzeBundle.js"
   },
-  "author": "Cory House",
+  "author": "Kenny Lee",
   "license": "MIT",
   "dependencies": {
     "@hot-loader/react-dom": "16.10.2",
@@ -37,10 +36,13 @@
     "object-assign": "4.1.1",
     "react": "16.11.0",
     "react-dom": "16.11.0",
+    "react-papaparse": "2.0.1",
     "react-redux": "7.1.1",
     "react-router-dom": "5.1.2",
+    "react-table": "7.0.0-rc.15",
     "redux": "4.0.4",
-    "redux-thunk": "2.3.0"
+    "redux-thunk": "2.3.0",
+    "styled-components": "5.0.0"
   },
   "devDependencies": {
     "@babel/cli": "7.6.4",
@@ -83,7 +85,7 @@
     "json-loader": "0.5.7",
     "mini-css-extract-plugin": "0.8.0",
     "mockdate": "2.0.5",
-    "node-sass": "4.13.0",
+    "node-sass": "4.13.1",
     "open-cli": "5.0.0",
     "postcss-loader": "3.0.0",
     "prompt": "1.0.0",
@@ -103,24 +105,10 @@
     "webpack-dev-middleware": "3.7.2",
     "webpack-hot-middleware": "2.25.0"
   },
-  "keywords": [
-    "react",
-    "reactjs",
-    "react-router",
-    "hot",
-    "reload",
-    "hmr",
-    "live",
-    "edit",
-    "webpack",
-    "redux",
-    "flux",
-    "boilerplate",
-    "starter"
-  ],
+  "keywords": [],
   "repository": {
     "type": "git",
-    "url": "https://github.com/coryhouse/react-slingshot"
+    "url": ""
   },
   "jest": {
     "moduleNameMapper": {

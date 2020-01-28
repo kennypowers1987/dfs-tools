@@ -3,13 +3,13 @@ import { Link } from 'react-router-dom';
 
 const HomePage = () => {
   return (
-    <div>
-      <h1>React Slingshot</h1>
+    <div className="container">
+      <h1>DFS Tools</h1>
 
       <h2>Get Started</h2>
       <ol>
-        <li>Review the <Link to="/fuel-savings">demo app</Link></li>
-        <li>Remove the demo and start coding: npm run remove-demo</li>
+        <li>These are the tools that I use personally to improve my DFS lineups, video tutorials coming soon</li>
+        <li>This is my first and most important tool, the <Link to="/projection-normalizer">Projection Normalizer</Link></li>
       </ol>
     </div>
   );
