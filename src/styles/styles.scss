@@ -35,4 +35,11 @@ input.small { width: 46px; }
 td.fuel-savings-label { width: 175px; }
 table {
   font-size: smaller;
+  padding:.5px;
+  td{
+    padding:3px;
+    border-width: .25px;
+    border:solid;
+    border-color:lightgray
+  }
 }

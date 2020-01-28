@@ -3,12 +3,11 @@ import PropTypes from "prop-types";
 
 export const Table = (props) => {
   const { tableData, tableTitle } = props;
-  console.log(tableData)
 
   const renderTableHeader = () => {
     let header = Object.keys(tableData[0])
     return header.map((key, index) => {
-       return <th key={index}>{key.toUpperCase()}</th>
+       return <th key={index}>{key}</th>
     })
   }
 
