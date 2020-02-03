@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom';
 
 const HomePage = () => {
   return (
-    <div className="container">
-      <h1>DFS Tools</h1>
+    <div className="container-fluid">
+      <h1>Free DFS Tools</h1>
 
       <h2>Get Started</h2>
       <ol>

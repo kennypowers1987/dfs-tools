@@ -1,44 +1,40 @@
-import React from 'react';
+import React from "react";
 import PropTypes from "prop-types";
+import BootstrapTable from "react-bootstrap-table-next";
 
-export const Table = (props) => {
+export const Table = props => {
   const { tableData, tableTitle } = props;
 
-  const renderTableHeader = () => {
-    let header = Object.keys(tableData[0])
-    return header.map((key, index) => {
-       return <th key={index}>{key}</th>
-    })
-  }
-
-  const renderTableData = () => {
-    return tableData.map((player, index) => {      
-      return (
-         <tr key={index}>
-            {Object.keys(player).map((k, i)=>{
-            return (<td key={i}>{player[k]}</td>)
-            })}
-         </tr>
-      )
-   })
-  }
+  const columns = Object.keys(tableData[0]).map(key => {
+    const column = {
+      dataField: key,
+      text: key,
+      sort: true
+    };
+    return column;
+  });
 
   const projectionTable = () => {
-     return (
-        <span>
-           <h2>{tableTitle}</h2>
-           <table>
-              <tbody>
-                 <tr>{renderTableHeader()}</tr>
-                 {renderTableData()}
-              </tbody>
-           </table>
-        </span>
-     )
-  }
+    return (
+      <span>
+        <h2>{tableTitle}</h2>
+        <BootstrapTable
+        id="mapping_table"
+          striped
+          hover
+          condensed
+          keyField="id"
+          data={tableData}
+          columns={columns}
+          dataSort={ true }
+          maxHeight='500px;'
+        />
+      </span>
+    );
+  };
   return projectionTable();
-}
+};
 
 Table.PropTypes = {
-  tableData:PropTypes.array.isRequired
-}
+  tableData: PropTypes.array.isRequired
+};

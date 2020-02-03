@@ -32,17 +32,20 @@
   "license": "MIT",
   "dependencies": {
     "@hot-loader/react-dom": "16.10.2",
+    "bootstrap": "4.4.1",
     "connected-react-router": "6.5.2",
     "object-assign": "4.1.1",
     "react": "16.11.0",
+    "react-bootstrap": "1.0.0-beta.16",
+    "react-bootstrap-table-next": "3.3.3",
     "react-dom": "16.11.0",
     "react-papaparse": "2.0.1",
     "react-redux": "7.1.1",
     "react-router-dom": "5.1.2",
-    "react-table": "7.0.0-rc.15",
     "redux": "4.0.4",
     "redux-thunk": "2.3.0",
-    "styled-components": "5.0.0"
+    "styled-components": "5.0.0",
+    "use-state-with-callback": "1.0.18"
   },
   "devDependencies": {
     "@babel/cli": "7.6.4",

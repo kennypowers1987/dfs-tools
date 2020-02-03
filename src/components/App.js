@@ -18,7 +18,7 @@ class App extends React.Component {
   render() {
     const activeStyle = { color: 'blue', fontWeight: 'bold' };
     return (
-      <div>
+      <div className='container-fluid'>
         <div>
           <NavLink exact to="/" activeStyle={activeStyle}>Home</NavLink>
           {' | '}
