@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { CSVReader, jsonToCSV } from "react-papaparse";
 import { Table } from "./ImportTable";
-import {Form , Col} from 'react-bootstrap';
+import { Form, Col } from "react-bootstrap";
 
 const ProjectionNormalizer = () => {
   const rgInput = React.createRef();
@@ -9,6 +9,9 @@ const ProjectionNormalizer = () => {
   const [rgData, setRgData] = useState([]);
   const [ssData, setSsData] = useState([]);
   const [exportData, setExportData] = useState({});
+  const isNumeric = num => {
+    return !isNaN(num);
+  };
 
   useEffect(() => {
     if (!ssData.length || Object.keys(rgData[5]).includes("In Play")) {
@@ -21,38 +24,38 @@ const ProjectionNormalizer = () => {
         player["SS Projection"] =
           saberSimPlayer.Projection > 0 ? saberSimPlayer.Projection : null;
         player["Overall Projection"] = (
-          (parseFloat(saberSimPlayer.Projection) + parseFloat(player.Points)) /
+          (saberSimPlayer.Projection + player.Points) /
           2
-        ).toFixed(2);
+        );
       } else {
         player["SS Projection"] = null;
         player["Overall Projection"] = player.Points;
       }
-      player["pOWN%"] = player["pOWN%"] ? parseFloat(player["pOWN%"]) : null;
+      player["pOWN%"] = player["pOWN%"] ? player["pOWN%"] : null;
       player.ppD = (
-        (parseFloat(player["Overall Projection"]) / parseFloat(player.Salary)) *
+        (player["Overall Projection"] / player.Salary) *
         1000
-      ).toFixed(2);
+      );
       if (player["pOWN%"] > 0) {
         player["In Play"] =
           player["Overall Projection"] > 15 && player.ppD > 2.5 ? true : false;
         player["Leverage Rating"] = player["In Play"]
           ? (
               (
-                parseFloat(player.ppD) /
-                (1 / (parseFloat(player["pOWN%"]) / 10))
-              ).toFixed() / parseFloat(player["pOWN%"])
-            ).toFixed(2)
+                player.ppD /
+                (1 / (player["pOWN%"]) / 10)
+              ) / player["pOWN%"]
+            )
           : -1;
         const ceilingPpd = (
-          (parseFloat(player["Ceil"]) / parseFloat(player.Salary)) *
+          (player["Ceil"] / player.Salary) *
           1000
-        ).toFixed(2);
+        );
         console.log(ceilingPpd);
         player["Leverage Rating"] = (
-          parseFloat(player["Leverage Rating"] * 10) +
-          (parseFloat(ceilingPpd) - parseFloat(player.ppD))
-        ).toFixed(2);
+          player["Leverage Rating"] * 10 +
+          (ceilingPpd - player.ppD)
+        );
         console.log(typeof player["Leverage Rating"]);
       } else {
         player["In Play"] = false;
@@ -86,11 +89,45 @@ const ProjectionNormalizer = () => {
   }, [rgData, setRgData, ssData, setSsData, exportData, setExportData]);
 
   const handleReadRgCSV = data => {
-    setRgData(data.data);
+    const parsedData = [];
+    data.data.forEach(obj => {      
+      if (Object.values(obj).length > 1) {
+        const newObj = {};
+        const keys = Object.keys(obj);
+        Object.values(obj).forEach((v, index) => {
+          let newVal;
+          if (isNumeric(v)) {
+            newVal = parseFloat(v);
+          } else {
+            newVal = v;
+          }
+          newObj[keys[index]] = newVal;         
+        });
+        parsedData.push(newObj)
+      }
+    });
+    setRgData(parsedData);
   };
 
   const handleReadSsCSV = data => {
-    setSsData(data.data);
+    const parsedData = [];
+    data.data.forEach(obj => {      
+      if (Object.values(obj).length > 1) {
+        const newObj = {};
+        const keys = Object.keys(obj);
+        Object.values(obj).forEach((v, index) => {
+          let newVal;
+          if (isNumeric(v)) {
+            newVal = parseFloat(v);
+          } else {
+            newVal = v;
+          }
+          newObj[keys[index]] = newVal;         
+        });
+        parsedData.push(newObj);
+      }
+    });
+    setSsData(parsedData);
   };
 
   const exportToCsv = site => {
