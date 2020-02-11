@@ -23,6 +23,8 @@ export const Table = props => {
           striped
           hover
           condensed
+          responsive
+          wrapperClasses="table-responsive"
           keyField="id"
           data={tableData}
           columns={columns}

@@ -4,13 +4,11 @@ $vin-green: #60b044;
 $vin-red: #ff0000;
 
 /* Styles */
-body {
-  line-height: 1.4em;
+body {  
   color: #4d4d4d; 
   -webkit-font-smoothing: antialiased;
   -moz-font-smoothing: antialiased;
   font-smoothing: antialiased;
-  font-weight: 300;  
   position:absolute;
   top:0px;
   left:0px;  
@@ -26,22 +24,20 @@ h2 {
 input.small { width: 46px; }
 td.fuel-savings-label { width: 175px; }
 
-#mapping_table tbody {
-  display:block;
-  height:50vh;
-  overflow-y:scroll;
-  font-size:xx-small
-  }
-  #mapping_table thead{
-  display:table;
-  width:99%;
-  table-layout:fixed;
-  font-size:xx-small;
-  }
-  #mapping_table tbody tr {
-  display:table;
-  width:100%;
-  table-layout:fixed;
+.table{
+  font-size:small;  
+    overflow: auto;
+    display: block;
+    table-layout: auto;
+    max-width:95vw;
+    max-height:45vh;
+    
+}
+
+th {
+  position: sticky;
+  top: 0;
+  background-color: white;
   }
 
   .card {
@@ -54,4 +50,9 @@ td.fuel-savings-label { width: 175px; }
 
   .container, .container-fluid {
     margin-top: .5em;
+  }
+
+  .jumbotron-fluid {
+    padding-left: 15px;
+    padding-right: 15px;
   }
