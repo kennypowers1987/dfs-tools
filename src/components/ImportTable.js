@@ -19,7 +19,7 @@ export const Table = props => {
       <span>
         <h2>{tableTitle}</h2>
         <BootstrapTable
-        id="mapping_table"
+        className="dataTable"
           striped
           hover
           condensed
