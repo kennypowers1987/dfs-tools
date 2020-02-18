@@ -169,6 +169,7 @@ const ProjectionNormalizer = () => {
             3
           ).toFixed(3)
         );
+        rwPlayer['COMBINED VALUE'] = rwPlayer["COMBINED PROJECTION"] / rwPlayer.SAL
       }
       if (rwPlayer) {
         rwPlayer["pOWN"] = player["pOWN"] ? player["pOWN"] : null;
