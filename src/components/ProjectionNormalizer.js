@@ -57,7 +57,6 @@ const ProjectionNormalizer = () => {
         const ceilingPpd = (player["Ceil"] / player.Salary) * 1000;
         player["Leverage Rating"] =
           player["Leverage Rating"] * 10 + (ceilingPpd - player.ppD);
-        console.log(typeof player["Leverage Rating"]);
       } else {
         player["In Play"] = false;
         player["Leverage Rating"] = -1;
@@ -189,7 +188,7 @@ const ProjectionNormalizer = () => {
           rwPlayer["COMBINED PROJECTION"] / rwPlayer.SAL;
       }
       if (rwPlayer) {
-        rwPlayer["pOWN"] = player["pOWN"] ? player["pOWN"] : null;
+        rwPlayer["pOWN%"] = player["pOWN%"] ? player["pOWN%"] : null;
       }
       finalPlayer = Object.assign({}, rwPlayer, player);
       return finalPlayer;
@@ -222,28 +221,22 @@ const ProjectionNormalizer = () => {
     const ss = ssWeightInput.current.valueAsNumber;
     const rw = rwWeightInput.current.valueAsNumber;
     if (!rg || !ss || !rw) return;
-    if (rg + ss + rw !== 10) return;
+    if (rg + ss + rw !== 100) return;
     const normalization = rgData.map(player => {
       let finalPlayer = {};
+      const projectionSum =
+        player["SS Projection"] * ss + player.Points * rg + player.FPTS * rw;
+      const projectionDivider = rg + ss + rw;
+      const combinedProjection = projectionSum / projectionDivider;
       finalPlayer["COMBINED PROJECTION"] = parseFloat(
-        (
-          (player["SS Projection"] * ss +
-            player.Points * rg +
-            player.FPTS / rw) /
-          10
-        ).toFixed(3)
+        combinedProjection.toFixed(1)
       )
-        ? parseFloat(
-            (
-              (player["SS Projection"] * ss +
-                player.Points * rg +
-                player.FPTS / rw) /
-              10
-            ).toFixed(3)
-          )
+        ? parseFloat(combinedProjection.toFixed(1))
         : 0;
       finalPlayer["COMBINED VALUE"] =
-        player["COMBINED PROJECTION"] / player.SAL ? player["COMBINED PROJECTION"] / player.SAL : 0;
+        player["COMBINED PROJECTION"] / player.SAL
+          ? parseFloat(player["COMBINED PROJECTION"] / player.SAL).toFixed(2)
+          : 0;
       finalPlayer = Object.assign({}, player, finalPlayer);
       return finalPlayer;
     });
@@ -391,7 +384,6 @@ const ProjectionNormalizer = () => {
             {rgData.length ? (
               <Table
                 tableData={rgData.filter(row => {
-                  console.log(row);
                   if (row) {
                     return row;
                   }
