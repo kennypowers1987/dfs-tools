@@ -3,9 +3,11 @@ import PropTypes from "prop-types";
 import BootstrapTable from "react-bootstrap-table-next";
 
 export const Table = props => {
+  console.log(props)
   const { tableData, tableTitle } = props;
 
   const columns = Object.keys(tableData[0]).map(key => {
+    
     const column = {
       dataField: key,
       text: key,

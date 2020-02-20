@@ -11,9 +11,19 @@ const ProjectionNormalizer = () => {
   const [ssData, setSsData] = useState([]);
   const [rwData, setRwData] = useState([]);
   const [exportData, setExportData] = useState({});
-  
+  const rgWeightInput = React.createRef();
+  const ssWeightInput = React.createRef();
+  const rwWeightInput = React.createRef();
+
   const isNumeric = num => {
     return !isNaN(num);
+  };
+
+  const fuzzyMatch = (str, pattern) => {
+    pattern = pattern.split("").reduce(function(a, b) {
+      return a + ".*" + b;
+    });
+    return new RegExp(pattern).test(str);
   };
 
   useEffect(() => {
@@ -23,7 +33,10 @@ const ProjectionNormalizer = () => {
     console.log("running");
     let finalPlayer;
     const comparison = rgData.map(player => {
-      let saberSimPlayer = ssData.find(({ Name }) => Name === player.Player);
+      //let saberSimPlayer = ssData.find(({ Name }) => Name === player.Player);
+      let saberSimPlayer = ssData.find(({ Name }) =>
+        fuzzyMatch(Name, player.Player)
+      );
       if (saberSimPlayer) {
         player["SS Projection"] =
           saberSimPlayer.Projection > 0 ? saberSimPlayer.Projection : null;
@@ -150,7 +163,10 @@ const ProjectionNormalizer = () => {
     setRwData(parsedData);
     let finalPlayer;
     const comparison = rgData.map(player => {
-      let rwPlayer = parsedData.find(({ PLAYER }) => PLAYER === player.Player);
+      //let rwPlayer = parsedData.find(({ PLAYER }) => PLAYER === player.Player);
+      let rwPlayer = parsedData.find(({ PLAYER }) =>
+        fuzzyMatch(PLAYER, player.Player)
+      );
       if (rwPlayer && rwPlayer.ACTIONS) {
         delete rwPlayer.ACTIONS;
       }
@@ -165,11 +181,12 @@ const ProjectionNormalizer = () => {
         rwPlayer["SS PROJECTION"] = player["SS Projection"];
         rwPlayer["COMBINED PROJECTION"] = parseFloat(
           (
-            (player["SS Projection"] + player.Points + rwPlayer.FPTS) /
-            3
+            (player["SS Projection"] * 3 + player.Points * 6 + rwPlayer.FPTS) /
+            10
           ).toFixed(3)
         );
-        rwPlayer['COMBINED VALUE'] = rwPlayer["COMBINED PROJECTION"] / rwPlayer.SAL
+        rwPlayer["COMBINED VALUE"] =
+          rwPlayer["COMBINED PROJECTION"] / rwPlayer.SAL;
       }
       if (rwPlayer) {
         rwPlayer["pOWN"] = player["pOWN"] ? player["pOWN"] : null;
@@ -200,9 +217,63 @@ const ProjectionNormalizer = () => {
     setRgData(comparison);
   };
 
-  const handleSubmit = (form, values) => {
-    console.log(form, values)
-  }
+  const handleWeightChange = () => {
+    const rg = rgWeightInput.current.valueAsNumber;
+    const ss = ssWeightInput.current.valueAsNumber;
+    const rw = rwWeightInput.current.valueAsNumber;
+    if (!rg || !ss || !rw) return;
+    if (rg + ss + rw !== 10) return;
+    const normalization = rgData.map(player => {
+      let finalPlayer = {};
+      finalPlayer["COMBINED PROJECTION"] = parseFloat(
+        (
+          (player["SS Projection"] * ss +
+            player.Points * rg +
+            player.FPTS / rw) /
+          10
+        ).toFixed(3)
+      )
+        ? parseFloat(
+            (
+              (player["SS Projection"] * ss +
+                player.Points * rg +
+                player.FPTS / rw) /
+              10
+            ).toFixed(3)
+          )
+        : 0;
+      finalPlayer["COMBINED VALUE"] =
+        player["COMBINED PROJECTION"] / player.SAL ? player["COMBINED PROJECTION"] / player.SAL : 0;
+      finalPlayer = Object.assign({}, player, finalPlayer);
+      return finalPlayer;
+    });
+
+    const exports = {};
+    exports.rg = normalization.map(player => {
+      if (player) {
+        let exportRow = {};
+        exportRow.name = player.Player;
+        exportRow.fpts = player["COMBINED PROJECTION"]
+          ? player["COMBINED PROJECTION"]
+          : null;
+        return exportRow;
+      }
+    });
+
+    exports.ss = normalization.map(player => {
+      if (player) {
+        let exportRow = {};
+        exportRow.Name = player.Player;
+        exportRow.Projection = player["COMBINED PROJECTION"]
+          ? player["COMBINED PROJECTION"]
+          : null;
+        exportRow.Ownership = player["pOWN%"] ? player["pOWN%"] : null;
+        return exportRow;
+      }
+    });
+    setRgData(normalization);
+    setExportData(exports);
+  };
 
   const exportToCsv = site => {
     const config = {
@@ -228,84 +299,109 @@ const ProjectionNormalizer = () => {
   return (
     <div className="container-fluid lead">
       <div className="jumbotron jumbotron-fluid">
-        <h2>Projection Normalizer</h2>
-        <h3>Getting Started</h3>
-        <div>
-          <ol>
-            <li>
-              Import projections from RotoGrinders (subscription required)
-              <CSVReader
-                onFileLoaded={handleReadRgCSV}
-                configOptions={tableConfig}
-                inputRef={rgInput}
-              />
-            </li>
-            <li>
-              Import projections from SaberSim (subscription required)
-              <CSVReader
-                onFileLoaded={handleReadSsCSV}
-                configOptions={tableConfig}
-                inputRef={ssInput}
-              />
-            </li>
-            <li>
-              Import projections from Rotowire (subscription required)
-              <CSVReader
-                onFileLoaded={handleReadRwCSV}
-                configOptions={tableConfig}
-                inputRef={rwInput}
-              />
-            </li>
-          </ol>
-          <Form id='normalizationForm'>
-            <Form.Row>
-              <Col>
-                <Form.Control placeholder="RG Weight" id='rgWeight' type='number' required />
-              </Col>
-              <Col>
-                <Form.Control placeholder="SS Weight" id='ssWeight' type='number' required />
-              </Col>
-              <Col>
-                <Form.Control placeholder="RW Weight" id='rwWeight' type='number' required />
-              </Col>
-              <Button variant="primary" onClick={handleSubmit} className='float-right'>
-              Normalize Projections
-            </Button>
-            </Form.Row>            
-          </Form>
+        <div style={{ "margin-left": ".5em" }}>
+          <h2>Projection Normalizer</h2>
+          <h3>Getting Started</h3>
+          <div>
+            <ol>
+              <li>
+                Import projections from RotoGrinders (subscription required)
+                <CSVReader
+                  onFileLoaded={handleReadRgCSV}
+                  configOptions={tableConfig}
+                  inputRef={rgInput}
+                />
+              </li>
+              <li>
+                Import projections from SaberSim (subscription required)
+                <CSVReader
+                  onFileLoaded={handleReadSsCSV}
+                  configOptions={tableConfig}
+                  inputRef={ssInput}
+                />
+              </li>
+              <li>
+                Import projections from Rotowire (subscription required)
+                <CSVReader
+                  onFileLoaded={handleReadRwCSV}
+                  configOptions={tableConfig}
+                  inputRef={rwInput}
+                />
+              </li>
+            </ol>
+            <Form id="normalizationForm" style={{ margin: ".5em" }}>
+              <Form.Row>
+                <Col>
+                  <Form.Label>RG Weight</Form.Label>
+                  <Form.Control
+                    placeholder="RG Weight"
+                    name="rgWeight"
+                    type="number"
+                    required
+                    onChange={handleWeightChange}
+                    ref={rgWeightInput}
+                  />
+                </Col>
+                <Col>
+                  <Form.Label>SS Weight</Form.Label>
+                  <Form.Control
+                    placeholder="SS Weight"
+                    name="ssWeight"
+                    type="number"
+                    required
+                    onChange={handleWeightChange}
+                    ref={ssWeightInput}
+                  />
+                </Col>
+                <Col>
+                  <Form.Label>RW Weight</Form.Label>
+                  <Form.Control
+                    placeholder="RW Weight"
+                    name="rwWeight"
+                    type="number"
+                    required
+                    onChange={handleWeightChange}
+                    ref={rwWeightInput}
+                  />
+                </Col>
+              </Form.Row>
+            </Form>
+          </div>
+          <button
+            className="btn btn-info float-right"
+            onClick={() => {
+              exportToCsv("rg");
+            }}
+          >
+            Export projections for RotoGrinders
+          </button>
+          <button
+            className="btn btn-info float-right"
+            onClick={() => {
+              exportToCsv("ss");
+            }}
+          >
+            Export projections for SaberSim
+          </button>
         </div>
-        <button
-          className="btn btn-info float-right"
-          onClick={() => {
-            exportToCsv("rg");
-          }}
-        >
-          Export projections for RotoGrinders
-        </button>
-        <button
-          className="btn btn-info float-right"
-          onClick={() => {
-            exportToCsv("ss");
-          }}
-        >
-          Export projections for SaberSim
-        </button>
       </div>
-
-      <div style={{ display: "flex" }}>
-        <div style={{ flex: "50%", overflow: "auto" }}>
-          {rgData.length ? (
-            <Table
-              tableData={rgData.filter(row => {
-                if (row.Player) {
-                  return row;
-                }
-              })}
-              tableTitle="Projections"
-            ></Table>
-          ) : null}
+      {rgData && rgData.length ? (
+        <div style={{ display: "flex" }}>
+          <div style={{ flex: "50%", overflow: "auto" }}>
+            {rgData.length ? (
+              <Table
+                tableData={rgData.filter(row => {
+                  console.log(row);
+                  if (row) {
+                    return row;
+                  }
+                })}
+                tableTitle="Projections"
+              ></Table>
+            ) : null}
+          </div>
         </div>
-      </div>
+      ) : null}
     </div>
   );
 };
