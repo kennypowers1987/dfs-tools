@@ -39,9 +39,9 @@ const ProjectionNormalizer = () => {
       );
       if (saberSimPlayer) {
         player["SS Projection"] =
-          saberSimPlayer.Projection > 0 ? saberSimPlayer.Projection : null;
+          saberSimPlayer['SS Projection'] > 0 ? saberSimPlayer['SS Projection'] : null;
         player["Overall Projection"] =
-          (saberSimPlayer.Projection + player.Points) / 2;
+          (saberSimPlayer['SS Projection'] + player.Points) / 2;
       } else {
         player["SS Projection"] = null;
         player["Overall Projection"] = player.Points;
