@@ -6,14 +6,14 @@ import { Form, Col, Button } from "react-bootstrap";
 const ProjectionNormalizer = () => {
   const rgInput = React.createRef();
   const ssInput = React.createRef();
-  const rwInput = React.createRef();
+  const SDInput = React.createRef();
   const [rgData, setRgData] = useState([]);
   const [ssData, setSsData] = useState([]);
-  const [rwData, setRwData] = useState([]);
+  const [SDData, setSDData] = useState([]);
   const [exportData, setExportData] = useState({});
   const rgWeightInput = React.createRef();
   const ssWeightInput = React.createRef();
-  const rwWeightInput = React.createRef();
+  const SDWeightInput = React.createRef();
 
   const isNumeric = num => {
     return !isNaN(num);
@@ -93,8 +93,8 @@ const ProjectionNormalizer = () => {
     setRgData,
     ssData,
     setSsData,
-    rwData,
-    setRwData,
+    SDData,
+    setSDData,
     exportData,
     setExportData
   ]);
@@ -141,7 +141,7 @@ const ProjectionNormalizer = () => {
     setSsData(parsedData);
   };
 
-  const handleReadRwCSV = data => {
+  const handleReadSDCSV = data => {
     const parsedData = [];
     data.data.forEach(obj => {
       if (Object.values(obj).length > 1) {
@@ -159,38 +159,17 @@ const ProjectionNormalizer = () => {
         parsedData.push(newObj);
       }
     });
-    setRwData(parsedData);
+    setSDData(parsedData);
     let finalPlayer;
     const comparison = rgData.map(player => {
-      //let rwPlayer = parsedData.find(({ PLAYER }) => PLAYER === player.Player);
-      let rwPlayer = parsedData.find(({ PLAYER }) =>
-        fuzzyMatch(PLAYER, player.Player)
+      //let SDPlayer = parsedData.find(({ PLAYER }) => PLAYER === player.Player);
+      let SDPlayer = parsedData.find(({ Name }) =>
+        fuzzyMatch(Name, player.Player)
       );
-      if (rwPlayer && rwPlayer.ACTIONS) {
-        delete rwPlayer.ACTIONS;
+      if(SDPlayer && player['Overall Projection']) {
+        SDPlayer['SuperDraft Projection'] = player['Overall Projection'] * SDPlayer.Multiplier
       }
-
-      if (
-        rwPlayer &&
-        player["SS Projection"] &&
-        player.Points &&
-        rwPlayer.FPTS
-      ) {
-        rwPlayer["RG PROJECTION"] = player.Points;
-        rwPlayer["SS PROJECTION"] = player["SS Projection"];
-        rwPlayer["COMBINED PROJECTION"] = parseFloat(
-          (
-            (player["SS Projection"] * 3 + player.Points * 6 + rwPlayer.FPTS) /
-            10
-          ).toFixed(3)
-        );
-        rwPlayer["COMBINED VALUE"] =
-          rwPlayer["COMBINED PROJECTION"] / rwPlayer.SAL;
-      }
-      if (rwPlayer) {
-        rwPlayer["pOWN%"] = player["pOWN%"] ? player["pOWN%"] : null;
-      }
-      finalPlayer = Object.assign({}, rwPlayer, player);
+      finalPlayer = Object.assign({}, SDPlayer, player);
       return finalPlayer;
     });
     const exports = {};
@@ -219,14 +198,14 @@ const ProjectionNormalizer = () => {
   const handleWeightChange = () => {
     const rg = rgWeightInput.current.valueAsNumber;
     const ss = ssWeightInput.current.valueAsNumber;
-    const rw = rwWeightInput.current.valueAsNumber;
-    if (!rg || !ss || !rw) return;
-    if (rg + ss + rw !== 100) return;
+    const SD = SDWeightInput.current.valueAsNumber;
+    if (!rg || !ss || !SD) return;
+    if (rg + ss + SD !== 100) return;
     const normalization = rgData.map(player => {
       let finalPlayer = {};
       const projectionSum =
-        player["SS Projection"] * ss + player.Points * rg + player.FPTS * rw;
-      const projectionDivider = rg + ss + rw;
+        player["SS Projection"] * ss + player.Points * rg + player.FPTS * SD;
+      const projectionDivider = rg + ss + SD;
       const combinedProjection = projectionSum / projectionDivider;
       finalPlayer["COMBINED PROJECTION"] = parseFloat(
         combinedProjection.toFixed(1)
@@ -314,11 +293,11 @@ const ProjectionNormalizer = () => {
                 />
               </li>
               <li>
-                Import projections from Rotowire (subscription required)
+                Convert projections for SuperDraft (subscription required)
                 <CSVReader
-                  onFileLoaded={handleReadRwCSV}
+                  onFileLoaded={handleReadSDCSV}
                   configOptions={tableConfig}
-                  inputRef={rwInput}
+                  inputRef={SDInput}
                 />
               </li>
             </ol>
@@ -347,14 +326,14 @@ const ProjectionNormalizer = () => {
                   />
                 </Col>
                 <Col>
-                  <Form.Label>RW Weight</Form.Label>
+                  <Form.Label>SD Weight</Form.Label>
                   <Form.Control
-                    placeholder="RW Weight"
-                    name="rwWeight"
+                    placeholder="SD Weight"
+                    name="SDWeight"
                     type="number"
                     required
                     onChange={handleWeightChange}
-                    ref={rwWeightInput}
+                    ref={SDWeightInput}
                   />
                 </Col>
               </Form.Row>
