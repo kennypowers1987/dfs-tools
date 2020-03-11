@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { CSVReader, jsonToCSV } from "react-papaparse";
 import { Table } from "./ImportTable";
-import { Form, Col, Button } from "react-bootstrap";
+import { Form, Col } from "react-bootstrap";
 
 const ProjectionNormalizer = () => {
   const rgInput = React.createRef();
@@ -39,9 +39,11 @@ const ProjectionNormalizer = () => {
       );
       if (saberSimPlayer) {
         player["SS Projection"] =
-          saberSimPlayer['SS Projection'] > 0 ? saberSimPlayer['SS Projection'] : null;
+          saberSimPlayer["SS Projection"] > 0
+            ? saberSimPlayer["SS Projection"]
+            : null;
         player["Overall Projection"] =
-          (saberSimPlayer['SS Projection'] + player.Points) / 2;
+          (saberSimPlayer["SS Projection"] + player.Points) / 2;
       } else {
         player["SS Projection"] = null;
         player["Overall Projection"] = player.Points;
@@ -166,8 +168,9 @@ const ProjectionNormalizer = () => {
       let SDPlayer = parsedData.find(({ Name }) =>
         fuzzyMatch(Name, player.Player)
       );
-      if(SDPlayer && player['Overall Projection']) {
-        SDPlayer['SuperDraft Projection'] = player['Overall Projection'] * SDPlayer.Multiplier
+      if (SDPlayer && player["Overall Projection"]) {
+        SDPlayer["SuperDraft Projection"] =
+          player["Overall Projection"] * SDPlayer.Multiplier;
       }
       finalPlayer = Object.assign({}, SDPlayer, player);
       return finalPlayer;
@@ -190,6 +193,11 @@ const ProjectionNormalizer = () => {
         : null;
       exportRow.Ownership = player["pOWN%"] ? player["pOWN%"] : null;
       return exportRow;
+    });
+    exports.sd = comparison.map(player => {
+      if (player) {
+        return player;
+      }
     });
     setExportData(exports);
     setRgData(comparison);
@@ -243,6 +251,12 @@ const ProjectionNormalizer = () => {
         return exportRow;
       }
     });
+
+    exports.sd = normalization.map(player => {
+      if (player) {
+        return player;
+      }
+    });
     setRgData(normalization);
     setExportData(exports);
   };
@@ -250,10 +264,17 @@ const ProjectionNormalizer = () => {
   const exportToCsv = site => {
     const config = {
       columns:
-        site === "rg" ? ["name", "fpts"] : ["Name", "Projection", "Ownership"],
+        site === "rg"
+          ? ["name", "fpts"]
+          : site === "ss"
+          ? ["Name", "Projection", "Ownership"]
+          : ["Lineup Position", "ID+Name", "SuperDraft Projection"],
       download: true,
       skipEmptyLines: true
     };
+    if (site === "sd") {
+      return generateSuperDraftLineupsAndExport();
+    }
     if (exportData && exportData[site]) {
       const csv = jsonToCSV(exportData[site], config);
       var hiddenElement = document.createElement("a");
@@ -262,6 +283,104 @@ const ProjectionNormalizer = () => {
       hiddenElement.download = `${site}.csv`;
       hiddenElement.click();
     }
+  };
+
+  const generateSuperDraftLineupsAndExport = () => {
+    const players = exportData["sd"]
+      .filter(player => {
+        if (player["SuperDraft Projection"]) {
+          return player;
+        }
+      })
+      .sort((a, b) =>
+        a["SuperDraft Projection"] < b["SuperDraft Projection"] ? 1 : -1
+      );
+    const numberOfGamesOnSlate =
+      new Set(
+        exportData["sd"].map(player => {
+          if (player["Game"]) {
+            return player["Game"];
+          }
+        })
+      ).size - 1;
+    let playerPool = {};
+    if (numberOfGamesOnSlate < 4) {
+      return alert("Just play the opto");
+    } else {
+      const howManyGuardsAndForwards = numberOfGamesOnSlate < 6 ? 4 : 6;
+      const howManyCenters = numberOfGamesOnSlate < 6 ? 2 : 3;
+      playerPool.guards = players
+        .filter(player => player["Lineup Position"] === "G")
+        .slice(0, howManyGuardsAndForwards);
+      playerPool.forwards = players
+        .filter(player => player["Lineup Position"] === "F")
+        .slice(0, howManyGuardsAndForwards);
+      playerPool.centers = players
+        .filter(player => player["Lineup Position"] === "C")
+        .slice(0, howManyCenters);
+    }
+
+    generateForSuperDraft(playerPool);
+  };
+
+  const generateForSuperDraft = originalPlayers => {
+    let lineups = [];
+    let players = originalPlayers;
+    const generate = () => {
+      if (lineups.length < 151) {
+        const getPlayer = (position, lineup) => {
+          const playerIndex = Math.floor(
+            Math.random() * players[position].length
+          );
+
+          const player = players[position][playerIndex]['ID+Name'];
+          console.log(Object.values(lineup), player)
+          if (!Object.values(lineup).includes(player)) {
+            return player;
+          } else {
+            return getPlayer(position, lineup);
+          }
+        };
+
+        let lineup = {};
+        lineup.G1 = getPlayer("guards", lineup);
+        lineup.G2 = getPlayer("guards", lineup);
+        lineup.G3 = getPlayer("guards", lineup);
+        lineup.F1 = getPlayer("forwards", lineup);
+        lineup.F2 = getPlayer("forwards", lineup);
+        lineup.F3 = getPlayer("forwards", lineup);
+        lineup.C = getPlayer("centers", lineup);
+
+        lineups.push(lineup);
+
+        return window.setTimeout(generate(), 1);
+      } else {
+        console.warn("process complete", lineups);
+        lineups[0] = {
+          G1: players['guards'][0]['ID+Name'],
+          G2: players['guards'][1]['ID+Name'],
+          G3: players['guards'][2]['ID+Name'],
+          F1: players['forwards'][0]['ID+Name'],
+          F2: players['forwards'][1]['ID+Name'],
+          F3: players['forwards'][2]['ID+Name'],
+          C: players['centers'][0]['ID+Name']
+        }
+        const config = {
+          columns:['G1', 'G2','G3','F1','F2','F3','C'],
+          download: true,
+          skipEmptyLines: true
+        };
+       
+          const csv = jsonToCSV(lineups, config);
+          var hiddenElement = document.createElement("a");
+          hiddenElement.href = "data:text/csv;charset=utf-8," + encodeURI(csv);
+          hiddenElement.target = "_blank";
+          hiddenElement.download = 'SD.csv';
+          hiddenElement.click();
+        
+      }
+    };
+    generate();
   };
 
   const tableConfig = {
@@ -354,6 +473,14 @@ const ProjectionNormalizer = () => {
             }}
           >
             Export projections for SaberSim
+          </button>
+          <button
+            className="btn btn-info float-right"
+            onClick={() => {
+              exportToCsv("sd");
+            }}
+          >
+            Export projections for SuperDraft
           </button>
         </div>
       </div>
