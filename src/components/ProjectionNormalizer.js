@@ -15,12 +15,12 @@ const ProjectionNormalizer = () => {
   const ssWeightInput = React.createRef();
   const SDWeightInput = React.createRef();
 
-  const isNumeric = num => {
+  const isNumeric = (num) => {
     return !isNaN(num);
   };
 
   const fuzzyMatch = (str, pattern) => {
-    pattern = pattern.split("").reduce(function(a, b) {
+    pattern = pattern.split("").reduce(function (a, b) {
       return a + ".*" + b;
     });
     return new RegExp(pattern).test(str);
@@ -32,8 +32,7 @@ const ProjectionNormalizer = () => {
     }
     console.log("running");
     let finalPlayer;
-    const comparison = rgData.map(player => {
-      //let saberSimPlayer = ssData.find(({ Name }) => Name === player.Player);
+    const comparison = rgData.map((player) => {
       let saberSimPlayer = ssData.find(({ Name }) =>
         fuzzyMatch(Name, player.Player)
       );
@@ -71,7 +70,7 @@ const ProjectionNormalizer = () => {
     setRgData(comparison);
 
     const exports = {};
-    exports.rg = comparison.map(player => {
+    exports.rg = comparison.map((player) => {
       let exportRow = {};
       exportRow.name = player.Player;
       exportRow.fpts = player["Overall Projection"]
@@ -80,7 +79,7 @@ const ProjectionNormalizer = () => {
       return exportRow;
     });
 
-    exports.ss = comparison.map(player => {
+    exports.ss = comparison.map((player) => {
       let exportRow = {};
       exportRow.Name = player.Player;
       exportRow.Projection = player["Overall Projection"]
@@ -98,12 +97,12 @@ const ProjectionNormalizer = () => {
     SDData,
     setSDData,
     exportData,
-    setExportData
+    setExportData,
   ]);
 
-  const handleReadRgCSV = data => {
+  const handleReadRgCSV = (data) => {
     const parsedData = [];
-    data.data.forEach(obj => {
+    data.data.forEach((obj) => {
       if (Object.values(obj).length > 1) {
         const newObj = {};
         const keys = Object.keys(obj);
@@ -122,9 +121,9 @@ const ProjectionNormalizer = () => {
     setRgData(parsedData);
   };
 
-  const handleReadSsCSV = data => {
+  const handleReadSsCSV = (data) => {
     const parsedData = [];
-    data.data.forEach(obj => {
+    data.data.forEach((obj) => {
       if (Object.values(obj).length > 1) {
         const newObj = {};
         const keys = Object.keys(obj);
@@ -143,9 +142,9 @@ const ProjectionNormalizer = () => {
     setSsData(parsedData);
   };
 
-  const handleReadSDCSV = data => {
+  const handleReadSDCSV = (data) => {
     const parsedData = [];
-    data.data.forEach(obj => {
+    data.data.forEach((obj) => {
       if (Object.values(obj).length > 1) {
         const newObj = {};
         const keys = Object.keys(obj);
@@ -163,7 +162,7 @@ const ProjectionNormalizer = () => {
     });
     setSDData(parsedData);
     let finalPlayer;
-    const comparison = rgData.map(player => {
+    const comparison = rgData.map((player) => {
       //let SDPlayer = parsedData.find(({ PLAYER }) => PLAYER === player.Player);
       let SDPlayer = parsedData.find(({ Name }) =>
         fuzzyMatch(Name, player.Player)
@@ -172,11 +171,19 @@ const ProjectionNormalizer = () => {
         SDPlayer["SuperDraft Projection"] =
           player["Overall Projection"] * SDPlayer.Multiplier;
       }
+      if (SDPlayer && SDPlayer["SuperDraft Projection"] && player["Ceil"]) {
+        SDPlayer["SuperDraft Ceiling"] = parseFloat(
+          (SDPlayer["SuperDraft Projection"] +
+            player["Ceil"] * SDPlayer.Multiplier) /
+            2
+        );
+        console.log(typeof SDPlayer["SuperDraft Ceiling"]);
+      }
       finalPlayer = Object.assign({}, SDPlayer, player);
       return finalPlayer;
     });
     const exports = {};
-    exports.rg = comparison.map(player => {
+    exports.rg = comparison.map((player) => {
       let exportRow = {};
       exportRow.name = player.Player;
       exportRow.fpts = player["COMBINED PROJECTION"]
@@ -185,7 +192,7 @@ const ProjectionNormalizer = () => {
       return exportRow;
     });
 
-    exports.ss = comparison.map(player => {
+    exports.ss = comparison.map((player) => {
       let exportRow = {};
       exportRow.Name = player.Player;
       exportRow.Projection = player["COMBINED PROJECTION"]
@@ -194,7 +201,7 @@ const ProjectionNormalizer = () => {
       exportRow.Ownership = player["pOWN%"] ? player["pOWN%"] : null;
       return exportRow;
     });
-    exports.sd = comparison.map(player => {
+    exports.sd = comparison.map((player) => {
       if (player) {
         return player;
       }
@@ -209,7 +216,7 @@ const ProjectionNormalizer = () => {
     const SD = SDWeightInput.current.valueAsNumber;
     if (!rg || !ss || !SD) return;
     if (rg + ss + SD !== 100) return;
-    const normalization = rgData.map(player => {
+    const normalization = rgData.map((player) => {
       let finalPlayer = {};
       const projectionSum =
         player["SS Projection"] * ss + player.Points * rg + player.FPTS * SD;
@@ -229,7 +236,7 @@ const ProjectionNormalizer = () => {
     });
 
     const exports = {};
-    exports.rg = normalization.map(player => {
+    exports.rg = normalization.map((player) => {
       if (player) {
         let exportRow = {};
         exportRow.name = player.Player;
@@ -240,7 +247,7 @@ const ProjectionNormalizer = () => {
       }
     });
 
-    exports.ss = normalization.map(player => {
+    exports.ss = normalization.map((player) => {
       if (player) {
         let exportRow = {};
         exportRow.Name = player.Player;
@@ -252,7 +259,7 @@ const ProjectionNormalizer = () => {
       }
     });
 
-    exports.sd = normalization.map(player => {
+    exports.sd = normalization.map((player) => {
       if (player) {
         return player;
       }
@@ -261,7 +268,7 @@ const ProjectionNormalizer = () => {
     setExportData(exports);
   };
 
-  const exportToCsv = site => {
+  const exportToCsv = (site) => {
     const config = {
       columns:
         site === "rg"
@@ -270,7 +277,7 @@ const ProjectionNormalizer = () => {
           ? ["Name", "Projection", "Ownership"]
           : ["Lineup Position", "ID+Name", "SuperDraft Projection"],
       download: true,
-      skipEmptyLines: true
+      skipEmptyLines: true,
     };
     if (site === "sd") {
       return generateSuperDraftLineupsAndExport();
@@ -287,17 +294,17 @@ const ProjectionNormalizer = () => {
 
   const generateSuperDraftLineupsAndExport = () => {
     const players = exportData["sd"]
-      .filter(player => {
+      .filter((player) => {
         if (player["SuperDraft Projection"]) {
           return player;
         }
       })
-      .sort((a, b) =>
-        a["SuperDraft Projection"] < b["SuperDraft Projection"] ? 1 : -1
-      );
+      .sort((a, b) => {
+        return a["SuperDraft Ceiling"] < b["SuperDraft Ceiling"] ? 1 : -1;
+      });
     const numberOfGamesOnSlate =
       new Set(
-        exportData["sd"].map(player => {
+        exportData["sd"].map((player) => {
           if (player["Game"]) {
             return player["Game"];
           }
@@ -307,34 +314,35 @@ const ProjectionNormalizer = () => {
     if (numberOfGamesOnSlate < 4) {
       return alert("Just play the opto");
     } else {
-      const howManyGuardsAndForwards = numberOfGamesOnSlate < 6 ? 4 : 6;
-      const howManyCenters = numberOfGamesOnSlate < 6 ? 2 : 3;
+      const howManyGuards = numberOfGamesOnSlate < 6 ? 6 : 7;
+      const howManyForwards = numberOfGamesOnSlate < 6 ? 5 : 6;
+      const howManyCenters = numberOfGamesOnSlate < 6 ? 3 : 4;
       playerPool.guards = players
-        .filter(player => player["Lineup Position"] === "G")
-        .slice(0, howManyGuardsAndForwards);
+        .filter((player) => player["Lineup Position"] === "G")
+        .slice(0, howManyGuards);
       playerPool.forwards = players
-        .filter(player => player["Lineup Position"] === "F")
-        .slice(0, howManyGuardsAndForwards);
+        .filter((player) => player["Lineup Position"] === "F")
+        .slice(0, howManyForwards);
       playerPool.centers = players
-        .filter(player => player["Lineup Position"] === "C")
+        .filter((player) => player["Lineup Position"] === "C")
         .slice(0, howManyCenters);
     }
 
     generateForSuperDraft(playerPool);
   };
 
-  const generateForSuperDraft = originalPlayers => {
+  const generateForSuperDraft = (originalPlayers) => {
     let lineups = [];
     let players = originalPlayers;
     const generate = () => {
-      if (lineups.length < 151) {
+      if (lineups.length < 301) {
         const getPlayer = (position, lineup) => {
           const playerIndex = Math.floor(
             Math.random() * players[position].length
           );
 
-          const player = players[position][playerIndex]['ID+Name'];
-          console.log(Object.values(lineup), player)
+          const player = players[position][playerIndex];
+          console.log(Object.values(lineup), player);
           if (!Object.values(lineup).includes(player)) {
             return player;
           } else {
@@ -343,48 +351,74 @@ const ProjectionNormalizer = () => {
         };
 
         let lineup = {};
-        lineup.G1 = getPlayer("guards", lineup);
+        lineup.G1 = players.guards[0];
         lineup.G2 = getPlayer("guards", lineup);
         lineup.G3 = getPlayer("guards", lineup);
-        lineup.F1 = getPlayer("forwards", lineup);
+        lineup.F1 = players.forwards[0];
         lineup.F2 = getPlayer("forwards", lineup);
         lineup.F3 = getPlayer("forwards", lineup);
         lineup.C = getPlayer("centers", lineup);
 
+        lineup.ceilingProjection =
+          lineup.G1["SuperDraft Ceiling"] +
+          lineup.G2["SuperDraft Ceiling"] +
+          lineup.G3["SuperDraft Ceiling"] +
+          lineup.F1["SuperDraft Ceiling"] +
+          lineup.F2["SuperDraft Ceiling"] +
+          lineup.F3["SuperDraft Ceiling"] +
+          lineup.C["SuperDraft Ceiling"];
+        lineup.G1 = lineup.G1["ID+Name"];
+        lineup.G2 = lineup.G2["ID+Name"];
+        lineup.G3 = lineup.G3["ID+Name"];
+        lineup.F1 = lineup.F1["ID+Name"];
+        lineup.F2 = lineup.F2["ID+Name"];
+        lineup.F3 = lineup.F3["ID+Name"];
+        lineup.C = lineup.C["ID+Name"];
         lineups.push(lineup);
 
         return window.setTimeout(generate(), 1);
       } else {
         console.warn("process complete", lineups);
         lineups[0] = {
-          G1: players['guards'][0]['ID+Name'],
-          G2: players['guards'][1]['ID+Name'],
-          G3: players['guards'][2]['ID+Name'],
-          F1: players['forwards'][0]['ID+Name'],
-          F2: players['forwards'][1]['ID+Name'],
-          F3: players['forwards'][2]['ID+Name'],
-          C: players['centers'][0]['ID+Name']
-        }
-        const config = {
-          columns:['G1', 'G2','G3','F1','F2','F3','C'],
-          download: true,
-          skipEmptyLines: true
+          G1: players["guards"][0]["ID+Name"],
+          G2: players["guards"][1]["ID+Name"],
+          G3: players["guards"][2]["ID+Name"],
+          F1: players["forwards"][0]["ID+Name"],
+          F2: players["forwards"][1]["ID+Name"],
+          F3: players["forwards"][2]["ID+Name"],
+          C: players["centers"][0]["ID+Name"],
         };
-       
-          const csv = jsonToCSV(lineups, config);
-          var hiddenElement = document.createElement("a");
-          hiddenElement.href = "data:text/csv;charset=utf-8," + encodeURI(csv);
-          hiddenElement.target = "_blank";
-          hiddenElement.download = 'SD.csv';
-          hiddenElement.click();
-        
+        lineups = lineups.sort((a, b) => {
+          return a["ceilingProjection"] < b["ceilingProjection"] ? 1 : -1;
+        });
+        const config = {
+          columns: [
+            "G1",
+            "G2",
+            "G3",
+            "F1",
+            "F2",
+            "F3",
+            "C",
+            "ceilingProjection",
+          ],
+          download: true,
+          skipEmptyLines: true,
+        };
+
+        const csv = jsonToCSV(lineups, config);
+        var hiddenElement = document.createElement("a");
+        hiddenElement.href = "data:text/csv;charset=utf-8," + encodeURI(csv);
+        hiddenElement.target = "_blank";
+        hiddenElement.download = "SD.csv";
+        hiddenElement.click();
       }
     };
     generate();
   };
 
   const tableConfig = {
-    header: true
+    header: true,
   };
 
   return (
@@ -489,7 +523,7 @@ const ProjectionNormalizer = () => {
           <div style={{ flex: "50%", overflow: "auto" }}>
             {rgData.length ? (
               <Table
-                tableData={rgData.filter(row => {
+                tableData={rgData.filter((row) => {
                   if (row) {
                     return row;
                   }
