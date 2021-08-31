@@ -133,6 +133,9 @@ const ProjectionNormalizer = () => {
     if (rg + fd !== 100) return;
     const normalization = rgData.map((player) => {
       let finalPlayer = {};
+      if(!player["FantasyPointsDraftKings"]){
+        player["FantasyPointsDraftKings"] = player.fpts;
+      }
       const projectionSum =
         (player["FantasyPointsDraftKings"] * fd) + (player.fpts * rg)
       const projectionDivider = rg + fd;
