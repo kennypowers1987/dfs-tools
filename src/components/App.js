@@ -1,7 +1,5 @@
 /* eslint-disable import/no-named-as-default */
 import { NavLink, Route, Switch } from "react-router-dom";
-
-import XflPage from "./XflPage";
 import FuelSavingsPage from "./containers/FuelSavingsPage";
 import HomePage from "./HomePage";
 import ProjectionNormalizer from "./ProjectionNormalizer";
@@ -25,14 +23,11 @@ class App extends React.Component {
           {/* <NavLink to="/fuel-savings" activeStyle={activeStyle}>Demo App</NavLink>
           {' | '} */}
           <NavLink to="/projection-normalizer" activeStyle={activeStyle}>Projection Normalizer</NavLink>
-          {' | '}
-          <NavLink to="/xfl" activeStyle={activeStyle}>Xfl</NavLink>
         </div>
         <Switch>
           <Route exact path="/" component={HomePage} />
           <Route path="/fuel-savings" component={FuelSavingsPage} />
           <Route path="/projection-normalizer" component={ProjectionNormalizer} />
-          <Route path="/xfl" component={XflPage} />
           <Route component={NotFoundPage} />
         </Switch>
       </div>

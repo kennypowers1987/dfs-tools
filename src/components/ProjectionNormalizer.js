@@ -5,15 +5,13 @@ import { Form, Col } from "react-bootstrap";
 
 const ProjectionNormalizer = () => {
   const rgInput = React.createRef();
-  const ssInput = React.createRef();
-  const SDInput = React.createRef();
+  const fdInput = React.createRef();
   const [rgData, setRgData] = useState([]);
-  const [ssData, setSsData] = useState([]);
-  const [SDData, setSDData] = useState([]);
+  const [fdData, setFdData] = useState([]);
   const [exportData, setExportData] = useState({});
   const rgWeightInput = React.createRef();
-  const ssWeightInput = React.createRef();
-  const SDWeightInput = React.createRef();
+  const fdWeightInput = React.createRef();
+
 
   const isNumeric = (num) => {
     return !isNaN(num);
@@ -27,43 +25,31 @@ const ProjectionNormalizer = () => {
   };
 
   useEffect(() => {
-    if (!ssData.length || Object.keys(rgData[5]).includes("In Play")) {
+    if (!fdData.length || Object.keys(rgData[5]).includes("In Play")) {
       return;
     }
-    console.log("running");
+    if(exportData.rg && exportData.rg.length && exportData.fd && exportData.fd.length) {
+      return;
+    }
     let finalPlayer;
     const comparison = rgData.map((player) => {
-      let saberSimPlayer = ssData.find(({ Name }) =>
-        fuzzyMatch(Name, player.Player)
+      let fantasyDataPlayer = fdData.find(({ Name }) =>{
+        return fuzzyMatch(Name, player.name)
+      }
+       
       );
-      if (saberSimPlayer) {
-        player["SS Projection"] =
-          saberSimPlayer["SS Projection"] > 0
-            ? saberSimPlayer["SS Projection"]
+      if (fantasyDataPlayer) {
+        player["FantasyPointsDraftKings"] =
+          fantasyDataPlayer["FantasyPointsDraftKings"] > 0
+            ? fantasyDataPlayer["FantasyPointsDraftKings"]
             : null;
         player["Overall Projection"] =
-          (saberSimPlayer["SS Projection"] + player.Points) / 2;
+          (fantasyDataPlayer["FantasyPointsDraftKings"] + player.fpts) / 2;
       } else {
-        player["SS Projection"] = null;
+        player["FantasyPointsDraftKings"] = null;
         player["Overall Projection"] = player.Points;
       }
-      player["pOWN%"] = player["pOWN%"] ? player["pOWN%"] : null;
-      player.ppD = (player["Overall Projection"] / player.Salary) * 1000;
-      if (player["pOWN%"] > 0) {
-        player["In Play"] =
-          player["Overall Projection"] > 15 && player.ppD > 2.5 ? true : false;
-        player["Leverage Rating"] = player["In Play"]
-          ? player.ppD / (1 / player["pOWN%"] / 10) / player["pOWN%"]
-          : -1;
-        const ceilingPpd = (player["Ceil"] / player.Salary) * 1000;
-        player["Leverage Rating"] =
-          player["Leverage Rating"] * 10 + (ceilingPpd - player.ppD);
-      } else {
-        player["In Play"] = false;
-        player["Leverage Rating"] = -1;
-      }
-
-      finalPlayer = Object.assign({}, saberSimPlayer, player);
+      finalPlayer = Object.assign({}, fantasyDataPlayer, player);
       return finalPlayer;
     });
 
@@ -72,14 +58,14 @@ const ProjectionNormalizer = () => {
     const exports = {};
     exports.rg = comparison.map((player) => {
       let exportRow = {};
-      exportRow.name = player.Player;
+      exportRow.player_id = player.player_id;
       exportRow.fpts = player["Overall Projection"]
         ? player["Overall Projection"]
         : null;
       return exportRow;
     });
 
-    exports.ss = comparison.map((player) => {
+    exports.fd = comparison.map((player) => {
       let exportRow = {};
       exportRow.Name = player.Player;
       exportRow.Projection = player["Overall Projection"]
@@ -92,10 +78,8 @@ const ProjectionNormalizer = () => {
   }, [
     rgData,
     setRgData,
-    ssData,
-    setSsData,
-    SDData,
-    setSDData,
+    fdData,
+    setFdData,
     exportData,
     setExportData,
   ]);
@@ -121,7 +105,7 @@ const ProjectionNormalizer = () => {
     setRgData(parsedData);
   };
 
-  const handleReadSsCSV = (data) => {
+  const handleReadFdCSV = (data) => {
     const parsedData = [];
     data.data.forEach((obj) => {
       if (Object.values(obj).length > 1) {
@@ -139,98 +123,25 @@ const ProjectionNormalizer = () => {
         parsedData.push(newObj);
       }
     });
-    setSsData(parsedData);
+    setFdData(parsedData);
   };
 
-  const handleReadSDCSV = (data) => {
-    const parsedData = [];
-    data.data.forEach((obj) => {
-      if (Object.values(obj).length > 1) {
-        const newObj = {};
-        const keys = Object.keys(obj);
-        Object.values(obj).forEach((v, index) => {
-          let newVal;
-          if (isNumeric(v)) {
-            newVal = parseFloat(v);
-          } else {
-            newVal = v;
-          }
-          newObj[keys[index]] = newVal;
-        });
-        parsedData.push(newObj);
-      }
-    });
-    setSDData(parsedData);
-    let finalPlayer;
-    const comparison = rgData.map((player) => {
-      //let SDPlayer = parsedData.find(({ PLAYER }) => PLAYER === player.Player);
-      let SDPlayer = parsedData.find(({ Name }) =>
-        fuzzyMatch(Name, player.Player)
-      );
-      if (SDPlayer && player["Overall Projection"]) {
-        SDPlayer["SuperDraft Projection"] =
-          player["Overall Projection"] * SDPlayer.Multiplier;
-      }
-      if (SDPlayer && SDPlayer["SuperDraft Projection"] && player["Ceil"]) {
-        SDPlayer["SuperDraft Ceiling"] = parseFloat(
-          (SDPlayer["SuperDraft Projection"] +
-            player["Ceil"] * SDPlayer.Multiplier) /
-            2
-        );
-        console.log(typeof SDPlayer["SuperDraft Ceiling"]);
-      }
-      finalPlayer = Object.assign({}, SDPlayer, player);
-      return finalPlayer;
-    });
-    const exports = {};
-    exports.rg = comparison.map((player) => {
-      let exportRow = {};
-      exportRow.name = player.Player;
-      exportRow.fpts = player["COMBINED PROJECTION"]
-        ? player["COMBINED PROJECTION"]
-        : null;
-      return exportRow;
-    });
-
-    exports.ss = comparison.map((player) => {
-      let exportRow = {};
-      exportRow.Name = player.Player;
-      exportRow.Projection = player["COMBINED PROJECTION"]
-        ? player["COMBINED PROJECTION"]
-        : null;
-      exportRow.Ownership = player["pOWN%"] ? player["pOWN%"] : null;
-      return exportRow;
-    });
-    exports.sd = comparison.map((player) => {
-      if (player) {
-        return player;
-      }
-    });
-    setExportData(exports);
-    setRgData(comparison);
-  };
-
-  const handleWeightChange = () => {
+  const handleWeightChange = () => {    
     const rg = rgWeightInput.current.valueAsNumber;
-    const ss = ssWeightInput.current.valueAsNumber;
-    const SD = SDWeightInput.current.valueAsNumber;
-    if (!rg || !ss || !SD) return;
-    if (rg + ss + SD !== 100) return;
+    const fd = fdWeightInput.current.valueAsNumber;
+    if (!rg || !fd) return;
+    if (rg + fd !== 100) return;
     const normalization = rgData.map((player) => {
       let finalPlayer = {};
       const projectionSum =
-        player["SS Projection"] * ss + player.Points * rg + player.FPTS * SD;
-      const projectionDivider = rg + ss + SD;
+        (player["FantasyPointsDraftKings"] * fd) + (player.fpts * rg)
+      const projectionDivider = rg + fd;
       const combinedProjection = projectionSum / projectionDivider;
       finalPlayer["COMBINED PROJECTION"] = parseFloat(
         combinedProjection.toFixed(1)
       )
         ? parseFloat(combinedProjection.toFixed(1))
         : 0;
-      finalPlayer["COMBINED VALUE"] =
-        player["COMBINED PROJECTION"] / player.SAL
-          ? parseFloat(player["COMBINED PROJECTION"] / player.SAL).toFixed(2)
-          : 0;
       finalPlayer = Object.assign({}, player, finalPlayer);
       return finalPlayer;
     });
@@ -238,8 +149,9 @@ const ProjectionNormalizer = () => {
     const exports = {};
     exports.rg = normalization.map((player) => {
       if (player) {
+        console.log(player)
         let exportRow = {};
-        exportRow.name = player.Player;
+        exportRow.player_id = player.player_id;
         exportRow.fpts = player["COMBINED PROJECTION"]
           ? player["COMBINED PROJECTION"]
           : null;
@@ -247,23 +159,17 @@ const ProjectionNormalizer = () => {
       }
     });
 
-    exports.ss = normalization.map((player) => {
-      if (player) {
+    exports.fd = normalization.map((player) => {
+      if (player) {        
         let exportRow = {};
-        exportRow.Name = player.Player;
+        exportRow.Name = player.name;
         exportRow.Projection = player["COMBINED PROJECTION"]
           ? player["COMBINED PROJECTION"]
           : null;
         exportRow.Ownership = player["pOWN%"] ? player["pOWN%"] : null;
         return exportRow;
       }
-    });
-
-    exports.sd = normalization.map((player) => {
-      if (player) {
-        return player;
-      }
-    });
+    });   
     setRgData(normalization);
     setExportData(exports);
   };
@@ -272,16 +178,13 @@ const ProjectionNormalizer = () => {
     const config = {
       columns:
         site === "rg"
-          ? ["name", "fpts"]
-          : site === "ss"
+          ? ["player_id", "fpts"]
+          : site === "fd"
           ? ["Name", "Projection", "Ownership"]
           : ["Lineup Position", "ID+Name", "SuperDraft Projection"],
       download: true,
       skipEmptyLines: true,
-    };
-    if (site === "sd") {
-      return generateSuperDraftLineupsAndExport();
-    }
+    };    
     if (exportData && exportData[site]) {
       const csv = jsonToCSV(exportData[site], config);
       var hiddenElement = document.createElement("a");
@@ -292,131 +195,6 @@ const ProjectionNormalizer = () => {
     }
   };
 
-  const generateSuperDraftLineupsAndExport = () => {
-    const players = exportData["sd"]
-      .filter((player) => {
-        if (player["SuperDraft Projection"]) {
-          return player;
-        }
-      })
-      .sort((a, b) => {
-        return a["SuperDraft Ceiling"] < b["SuperDraft Ceiling"] ? 1 : -1;
-      });
-    const numberOfGamesOnSlate =
-      new Set(
-        exportData["sd"].map((player) => {
-          if (player["Game"]) {
-            return player["Game"];
-          }
-        })
-      ).size - 1;
-    let playerPool = {};
-    if (numberOfGamesOnSlate < 4) {
-      return alert("Just play the opto");
-    } else {
-      const howManyGuards = numberOfGamesOnSlate < 6 ? 6 : 7;
-      const howManyForwards = numberOfGamesOnSlate < 6 ? 5 : 6;
-      const howManyCenters = numberOfGamesOnSlate < 6 ? 3 : 4;
-      playerPool.guards = players
-        .filter((player) => player["Lineup Position"] === "G")
-        .slice(0, howManyGuards);
-      playerPool.forwards = players
-        .filter((player) => player["Lineup Position"] === "F")
-        .slice(0, howManyForwards);
-      playerPool.centers = players
-        .filter((player) => player["Lineup Position"] === "C")
-        .slice(0, howManyCenters);
-    }
-
-    generateForSuperDraft(playerPool);
-  };
-
-  const generateForSuperDraft = (originalPlayers) => {
-    let lineups = [];
-    let players = originalPlayers;
-    const generate = () => {
-      if (lineups.length < 301) {
-        const getPlayer = (position, lineup) => {
-          const playerIndex = Math.floor(
-            Math.random() * players[position].length
-          );
-
-          const player = players[position][playerIndex];
-          console.log(Object.values(lineup), player);
-          if (!Object.values(lineup).includes(player)) {
-            return player;
-          } else {
-            return getPlayer(position, lineup);
-          }
-        };
-
-        let lineup = {};
-        lineup.G1 = players.guards[0];
-        lineup.G2 = getPlayer("guards", lineup);
-        lineup.G3 = getPlayer("guards", lineup);
-        lineup.F1 = players.forwards[0];
-        lineup.F2 = getPlayer("forwards", lineup);
-        lineup.F3 = getPlayer("forwards", lineup);
-        lineup.C = getPlayer("centers", lineup);
-
-        lineup.ceilingProjection =
-          lineup.G1["SuperDraft Ceiling"] +
-          lineup.G2["SuperDraft Ceiling"] +
-          lineup.G3["SuperDraft Ceiling"] +
-          lineup.F1["SuperDraft Ceiling"] +
-          lineup.F2["SuperDraft Ceiling"] +
-          lineup.F3["SuperDraft Ceiling"] +
-          lineup.C["SuperDraft Ceiling"];
-        lineup.G1 = lineup.G1["ID+Name"];
-        lineup.G2 = lineup.G2["ID+Name"];
-        lineup.G3 = lineup.G3["ID+Name"];
-        lineup.F1 = lineup.F1["ID+Name"];
-        lineup.F2 = lineup.F2["ID+Name"];
-        lineup.F3 = lineup.F3["ID+Name"];
-        lineup.C = lineup.C["ID+Name"];
-        lineups.push(lineup);
-
-        return window.setTimeout(generate(), 1);
-      } else {
-        console.warn("process complete", lineups);
-        lineups[0] = {
-          G1: players["guards"][0]["ID+Name"],
-          G2: players["guards"][1]["ID+Name"],
-          G3: players["guards"][2]["ID+Name"],
-          F1: players["forwards"][0]["ID+Name"],
-          F2: players["forwards"][1]["ID+Name"],
-          F3: players["forwards"][2]["ID+Name"],
-          C: players["centers"][0]["ID+Name"],
-        };
-        lineups = lineups.sort((a, b) => {
-          return a["ceilingProjection"] < b["ceilingProjection"] ? 1 : -1;
-        });
-        const config = {
-          columns: [
-            "G1",
-            "G2",
-            "G3",
-            "F1",
-            "F2",
-            "F3",
-            "C",
-            "ceilingProjection",
-          ],
-          download: true,
-          skipEmptyLines: true,
-        };
-
-        const csv = jsonToCSV(lineups, config);
-        var hiddenElement = document.createElement("a");
-        hiddenElement.href = "data:text/csv;charset=utf-8," + encodeURI(csv);
-        hiddenElement.target = "_blank";
-        hiddenElement.download = "SD.csv";
-        hiddenElement.click();
-      }
-    };
-    generate();
-  };
-
   const tableConfig = {
     header: true,
   };
@@ -424,7 +202,7 @@ const ProjectionNormalizer = () => {
   return (
     <div className="container-fluid lead">
       <div className="jumbotron jumbotron-fluid">
-        <div style={{ "margin-left": ".5em" }}>
+        <div style={{ "marginLeft": ".5em" }}>
           <h2>Projection Normalizer</h2>
           <h3>Getting Started</h3>
           <div>
@@ -438,19 +216,11 @@ const ProjectionNormalizer = () => {
                 />
               </li>
               <li>
-                Import projections from SaberSim (subscription required)
+                Import projections from FantasyData (subscription required)
                 <CSVReader
-                  onFileLoaded={handleReadSsCSV}
+                  onFileLoaded={handleReadFdCSV}
                   configOptions={tableConfig}
-                  inputRef={ssInput}
-                />
-              </li>
-              <li>
-                Convert projections for SuperDraft (subscription required)
-                <CSVReader
-                  onFileLoaded={handleReadSDCSV}
-                  configOptions={tableConfig}
-                  inputRef={SDInput}
+                  inputRef={fdInput}
                 />
               </li>
             </ol>
@@ -468,25 +238,14 @@ const ProjectionNormalizer = () => {
                   />
                 </Col>
                 <Col>
-                  <Form.Label>SS Weight</Form.Label>
+                  <Form.Label>FantasyData Weight</Form.Label>
                   <Form.Control
-                    placeholder="SS Weight"
-                    name="ssWeight"
+                    placeholder="FantasyData Weight"
+                    name="fdWeight"
                     type="number"
                     required
                     onChange={handleWeightChange}
-                    ref={ssWeightInput}
-                  />
-                </Col>
-                <Col>
-                  <Form.Label>SD Weight</Form.Label>
-                  <Form.Control
-                    placeholder="SD Weight"
-                    name="SDWeight"
-                    type="number"
-                    required
-                    onChange={handleWeightChange}
-                    ref={SDWeightInput}
+                    ref={fdWeightInput}
                   />
                 </Col>
               </Form.Row>
@@ -499,22 +258,6 @@ const ProjectionNormalizer = () => {
             }}
           >
             Export projections for RotoGrinders
-          </button>
-          <button
-            className="btn btn-info float-right"
-            onClick={() => {
-              exportToCsv("ss");
-            }}
-          >
-            Export projections for SaberSim
-          </button>
-          <button
-            className="btn btn-info float-right"
-            onClick={() => {
-              exportToCsv("sd");
-            }}
-          >
-            Export projections for SuperDraft
           </button>
         </div>
       </div>
